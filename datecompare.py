@@ -116,6 +116,7 @@ def load_file(p_file):
     for i in range(1,4):
         attributes.append(attributes[1])
         attributes.remove(attributes[1])
+    attributes[-1],attributes[-2] = attributes[-2],attributes[-1]
 
     attributes_value_dict = {}
     for i in attributes:
@@ -131,8 +132,8 @@ def load_file(p_file):
         temp_array.remove(temp_array[1])
         spltlist = splt.split('"')
         temp_array.append(spltlist[0])
+        temp_array.append(spltlist[2])    #modified!!!!!!Rating last.
         temp_array.append(spltlist[1][1:-1])
-        temp_array.append(spltlist[2])
         if '' in temp_array:
             continue
         example = {}  # 样本(X,y)
@@ -142,8 +143,9 @@ def load_file(p_file):
                 attributes_value_dict[attributes[i]].append(temp_array[i])
         data_set.append(example)
     f.close()
-    return data_set,attributes_value_dict
-dataSet, attriList = load_file('test.csv')
+    return data_set,attributes_value_dict,attributes
+dataSet, attriList, attriNames= load_file('test.csv')
+
 # print(attriList['Size'])
 
 '''deal with dates'''
@@ -155,34 +157,45 @@ dataSet, attriList = load_file('test.csv')
 #     dates.append(dat)
 
 # m = rankClass(dates)  #sorted dates(Date class)
-def numericApart(p_data_set,p_num_attribute,p_class,p_mid):
-    modified_data_set = p_data_set[:]
-    for i in modified_data_set:
+def numericApart(data_to_be_modified,p_num_attribute,p_class,p_mid):
+    for i in data_to_be_modified:
         a = p_class(i[p_num_attribute])
         if isinstance(a,int) or isinstance(a,float):
             value = a
         else:
             value = a.val
         if value > p_mid:
-            i[p_num_attribute] = 'larger'
+            i[p_num_attribute] = 1  #larger than the mid value
         else:
-            i[p_num_attribute] = 'smaller or else'
+            i[p_num_attribute] = 0  #smaller or else
 
-    return modified_data_set
 
-def characterApart(p_data_set,p_cha_attribute,p_chosen):
-    modified_data_set = p_data_set[:]
-    for i in modified_data_set:
-        if i[p_cha_attribute] != p_chosen:
-            i[p_cha_attribute] = 'not ' + p_chosen
-    return modified_data_set
-    
+class Unknown:
+    def __init__(self,cg):
+        self.val = 3
+classList = [Size,Installs,Unknown,Price,Unknown,Unknown,Date,Version,Version,Unknown,int,float]
+classifyList = [100,1000,34,9,56,34,20190203,3.4,3.9,32,4,4.4] #4.4 is fixed. Others are xiabiande
+def get_data_for_processing(p_data_set,p_classify_list):
+    global attriNames,classList
+    data_for_processing = p_data_set[:]
+    for i in data_for_processing:
+        del i['App']
+    for j in range(len(classList)):
+        numericApart(data_for_processing,attriNames[j+1],classList[j],p_classify_list[j])
+    return data_for_processing
+print(get_data_for_processing(dataSet,classifyList)[:10])
+        
 
-print(numericApart(dataSet,'Installs',Installs,1000)[:5])
+
+
+
+# rating_classi = numericApart(dataSet,'Rating',float,4.4)
+# category_classi = numericApart(rating_classi,'Category',Unknown,3)
+# reviews_classi = numericApart(category_classi,'Reviews',int,1000)
+# size_classi = numericApart(reviews_classi,'Size',Size,10000)
+# installs_classi = numericApart()
 
 # print(Version == int)
-
-
 
 
 
